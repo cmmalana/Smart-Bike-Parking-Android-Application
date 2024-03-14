@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Smart Bike Parking</string>
+    <string name="thankyou_message">Thank you for using Smart Bike Parking. Don\'t forget to remove your bicycle and get your bicycle helmet.</string>
+    <string name="instruction_message">Welcome to Smart Bike Parking Application! Before continuing, kindly read the instructions below:\n\n1. Scan the QR Code displayed in the Smart Bike Parking.\n\n2. Make sure your phone is connected to the internet to be able to sign up and login.\n\n3. Make sure you have allowed the permission to access the camera. Otherwise, clear data or reinstall the application.\n\nIf all things are done and clear, kindly tap the GET STARTED button to start. Thank you.</string>
+</resources>

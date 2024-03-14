@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/login_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".LoginTwoFactAuth">
+
+    <TextView
+        android:id="@+id/title_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Two Factor Authentication"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginTop="32dp"
+        android:layout_centerHorizontal="true"/>
+
+    <EditText
+        android:id="@+id/verification_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="phone"
+        android:hint="Enter Verification Code"
+        android:layout_below="@id/title_text_view"
+        android:layout_marginTop="32dp"
+        android:layout_marginHorizontal="16dp"/>
+
+    <Button
+        android:id="@+id/send_code_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Code"
+        android:layout_below="@id/verification_text"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="16dp"/>
+
+    <TextView
+        android:id="@+id/message_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Click send code to receive an OTP to your phone number to unlock."
+        android:layout_below="@id/send_code_button"
+        android:layout_marginTop="8dp"
+        android:layout_marginHorizontal="16dp"/>
+
+    <TextView
+        android:id="@+id/unlock_warning_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Unlocking the Smart Bike Parking will cause to unbind your account with the system."
+        android:textColor="@android:color/holo_red_dark"
+        android:layout_below="@id/message_text_view"
+        android:layout_marginTop="8dp"
+        android:layout_marginHorizontal="16dp"/>
+
+    <Button
+        android:id="@+id/verify_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Verify"
+        android:layout_below="@id/unlock_warning_text_view"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="16dp"/>
+
+</RelativeLayout>
