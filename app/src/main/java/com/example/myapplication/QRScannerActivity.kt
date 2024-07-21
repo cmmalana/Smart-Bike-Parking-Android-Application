@@ -15,10 +15,16 @@ import com.budiyev.android.codescanner.DecodeCallback
 
 class QRScannerActivity : AppCompatActivity() {
     private lateinit var codeScanner: CodeScanner
+    private var username: String? = null
+    private var password: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_qrscanner)
+
+        // Retrieve username and password from Intent extras
+        username = intent.getStringExtra("username")
+        password = intent.getStringExtra("password")
 
         // Initialize CodeScanner
         val scannerView = findViewById<CodeScannerView>(R.id.scanner_view)
@@ -51,21 +57,19 @@ class QRScannerActivity : AppCompatActivity() {
                 // Handle response from the server
                 if (response.trim() == "0") {
                     Toast.makeText(this, "Invalid QR Code. Please try again.", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, QRScannerActivity::class.java)
-                    startActivity(intent)
-                    finish()
+                    // Restart the activity if needed
+                    // val intent = Intent(this, QRScannerActivity::class.java)
+                    // startActivity(intent)
+                    // finish()
                 } else {
                     // QR code exists in the database
                     val noValue = response.toInt()
-
-                    // Check if user exists before updating user info
                     checkUserExistence(noValue, qrCodeValue)
                 }
             },
             Response.ErrorListener { error ->
                 // Handle error
                 Log.e("Volley Error", error.toString())
-                // Show error message
                 Toast.makeText(this, "An error occurred", Toast.LENGTH_SHORT).show()
             }) {
 
@@ -94,11 +98,12 @@ class QRScannerActivity : AppCompatActivity() {
                     updateNoAndUserInfo(qrCodeValue, noValue.toString())
                     val intent = Intent(this, UnlockActivity::class.java)
                     intent.putExtra("qr_code_id", noValue)
+                    intent.putExtra("username", username)
+                    intent.putExtra("password", password)
                     startActivity(intent)
                     finish()
                 } else {
                     // User already exists, handle accordingly
-                    // For example, show a message or use a different system
                     Log.d("Response", "Response from server: $response")
                     Toast.makeText(this, "There is an account registered in this Smart Bike Parking System", Toast.LENGTH_SHORT).show()
                     Toast.makeText(this, "Please use a different Smart Bike Parking System. Thank you.", Toast.LENGTH_SHORT).show()
@@ -110,7 +115,6 @@ class QRScannerActivity : AppCompatActivity() {
             Response.ErrorListener { error ->
                 // Handle error
                 Log.e("Volley Error", error.toString())
-                // Show error message
                 Toast.makeText(this, "An error occurred while checking user existence", Toast.LENGTH_SHORT).show()
             }) {
 
@@ -125,9 +129,7 @@ class QRScannerActivity : AppCompatActivity() {
     }
 
     private fun updateNoAndUserInfo(qrCodeValue: String, noValue: String) {
-        // Update No in the database
         updateNoInDatabase(qrCodeValue, noValue)
-        // Update User and Pass in the database
         updateUserInfoInDatabase(noValue)
     }
 
@@ -143,14 +145,13 @@ class QRScannerActivity : AppCompatActivity() {
             Response.ErrorListener { error ->
                 // Handle error
                 Log.e("Volley Error", error.toString())
-                // Show error message
                 Toast.makeText(this, "An error occurred while updating No in database", Toast.LENGTH_SHORT).show()
             }) {
 
             override fun getParams(): MutableMap<String, String> {
                 val params = HashMap<String, String>()
-                params["username"] = intent.getStringExtra("username") ?: ""
-                params["password"] = intent.getStringExtra("password") ?: ""
+                params["username"] = username ?: ""
+                params["password"] = password ?: ""
                 params["noValue"] = noValue
                 return params
             }
@@ -171,14 +172,13 @@ class QRScannerActivity : AppCompatActivity() {
             Response.ErrorListener { error ->
                 // Handle error
                 Log.e("Volley Error", error.toString())
-                // Show error message
                 Toast.makeText(this, "An error occurred while updating User and Pass in database", Toast.LENGTH_SHORT).show()
             }) {
 
             override fun getParams(): MutableMap<String, String> {
                 val params = HashMap<String, String>()
-                params["user"] = intent.getStringExtra("username") ?: ""
-                params["pass"] = intent.getStringExtra("password") ?: ""
+                params["user"] = username ?: ""
+                params["pass"] = password ?: ""
                 params["noValue"] = noValue
                 return params
             }

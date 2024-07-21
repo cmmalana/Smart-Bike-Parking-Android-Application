@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -13,7 +14,9 @@ import com.android.volley.toolbox.Volley
 
 class UnlockActivity : AppCompatActivity() {
 
-    private val url = "https://nusmb.com/data/unlock.php"
+    private val checkUrl = "https://nusmb.com/data/parkingcheck.php"
+    private val unlockUrl = "https://nusmb.com/data/unlock.php"
+    private val handler = Handler()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +36,9 @@ class UnlockActivity : AppCompatActivity() {
         val username = intent.getStringExtra("username") ?: ""
         val password = intent.getStringExtra("password") ?: ""
 
+        // Initial check and update every second
+        updateParkingStatus(qrCodeId, unlockButton, lockButton)
+
         unlockButton.setOnClickListener {
             val intent = Intent(this, LoginTwoFactAuth::class.java)
             intent.putExtra("qr_code_id", qrCodeId)
@@ -46,17 +52,51 @@ class UnlockActivity : AppCompatActivity() {
             startActivity(Intent(this, LPromptActivity::class.java))
         }
 
-        imageButton.setOnClickListener{
+        imageButton.setOnClickListener {
             val intent = Intent(this, ImagesActivity::class.java)
             intent.putExtra("qr_code_id", qrCodeId)
             startActivity(intent)
         }
     }
 
+    private fun updateParkingStatus(qrCodeId: Int, unlockButton: ImageButton, lockButton: ImageButton) {
+        val checkUrlWithParams = "$checkUrl?ID=$qrCodeId"
+
+        val queue = Volley.newRequestQueue(this)
+        val request = StringRequest(
+            Request.Method.GET, checkUrlWithParams,
+            Response.Listener<String> { response ->
+                // Handle successful response
+                if (response.trim() == "1") {
+                    // Make lock button unclickable
+                    lockButton.isEnabled = false
+                    lockButton.setImageResource(R.drawable.buttonulockgray)
+                    unlockButton.isEnabled = true
+                    unlockButton.setImageResource(R.drawable.buttonulock)
+                } else if (response.trim() == "0") {
+                    // Make unlock button unclickable
+                    unlockButton.isEnabled = false
+                    unlockButton.setImageResource(R.drawable.buttonulockgray)
+                    lockButton.isEnabled = true
+                    lockButton.setImageResource(R.drawable.buttonlock)
+                }
+                // Schedule the next update after 1 second
+                handler.postDelayed({ updateParkingStatus(qrCodeId, unlockButton, lockButton) }, 1000)
+            },
+            Response.ErrorListener { error ->
+                // Handle error response
+                showToast("Error: ${error.message}")
+                // Schedule the next update after 1 second even if there's an error
+                handler.postDelayed({ updateParkingStatus(qrCodeId, unlockButton, lockButton) }, 1000)
+            }
+        )
+        queue.add(request)
+    }
+
     private fun sendRequest(parking: Int, qrCodeId: Int) {
         val queue = Volley.newRequestQueue(this)
         val request = object : StringRequest(
-            Request.Method.POST, url,
+            Request.Method.POST, unlockUrl,
             Response.Listener<String> { response ->
                 // Handle successful response
                 if (response == "Parking column updated successfully") {
@@ -82,5 +122,11 @@ class UnlockActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Remove any remaining callbacks to prevent memory leaks
+        handler.removeCallbacksAndMessages(null)
     }
 }

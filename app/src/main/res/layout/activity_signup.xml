@@ -7,16 +7,16 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="16dp"
         android:text="Login"
-        android:textSize="24sp"
-        android:padding="16dp"/>
+        android:textSize="24sp" />
 
     <EditText
         android:id="@+id/username_edit_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Username"
-        android:padding="16dp"/>
+        android:padding="16dp" />
 
     <EditText
         android:id="@+id/password_edit_text"

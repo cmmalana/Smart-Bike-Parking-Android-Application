@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -10,8 +9,8 @@ import android.widget.EditText
 import android.widget.Toast
 import com.android.volley.Request
 import com.android.volley.Response
-import com.android.volley.toolbox.Volley
 import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import java.util.*
 
 class LoginTwoFactAuth : AppCompatActivity() {
@@ -19,6 +18,11 @@ class LoginTwoFactAuth : AppCompatActivity() {
     private var phoneNumber: String = ""
     private var verificationCode: String = ""
     private val url = "https://nusmb.com/data/unlock.php"
+    private val emailUrl = "https://nusmb.com/data/emailcheck.php"
+    private val sendToEmailUrl = "https://nusmb.com/data/emailotp.php"
+
+    private lateinit var userEmail: String // To store the retrieved email
+    private lateinit var username: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +31,10 @@ class LoginTwoFactAuth : AppCompatActivity() {
         // Retrieve the qrCodeId from the Intent
         val qrCodeId = intent.getIntExtra("qr_code_id", -1)
 
-        // Get phone number and generate verification code
+        // Retrieve username and password from Intent
+        username = intent.getStringExtra("username") ?: ""
+
+        // Get phone number and generate initial verification code
         getPhoneNumber(qrCodeId)
         generateVerificationCode()
 
@@ -39,6 +46,21 @@ class LoginTwoFactAuth : AppCompatActivity() {
             sendVerificationCode(verificationCode, qrCodeId)
             Toast.makeText(this, "Verification code sent to $phoneNumber", Toast.LENGTH_SHORT).show()
             Log.d("Verification Code", verificationCode)
+        }
+
+        val sendToEmailButton = findViewById<Button>(R.id.send_to_email_button)
+        sendToEmailButton.setOnClickListener {
+            Toast.makeText(this, "Sending...", Toast.LENGTH_SHORT).show()
+
+            // Check if userEmail is already retrieved
+            if (::userEmail.isInitialized && userEmail.isNotEmpty()) {
+                // Generate a new verification code before sending to email
+                verificationCode = generateVerificationCode()
+                sendVerificationToEmail(userEmail, username, verificationCode)
+            } else {
+                // Retrieve email first, then generate and send verification code
+                getEmailAndSendVerification(username)
+            }
         }
 
         val verifyButton = findViewById<Button>(R.id.verify_button)
@@ -102,7 +124,36 @@ class LoginTwoFactAuth : AppCompatActivity() {
         }
     }
 
-    private fun sendRequest(parking: Int,  qrCodeId: Int) {
+    private fun sendVerificationToEmail(email: String, username: String, newVerificationCode: String) {
+        val queue = Volley.newRequestQueue(this)
+        val url = sendToEmailUrl
+
+        val stringRequest = object : StringRequest(
+            Request.Method.POST, url,
+            Response.Listener<String> { response ->
+                // Handle successful response
+                Toast.makeText(this, "Verification code sent to $email", Toast.LENGTH_SHORT).show()
+                Log.d("Verification Code", newVerificationCode)
+            },
+            Response.ErrorListener { error ->
+                // Handle error
+                Log.e("TwoFactorAuthActivity", "Error sending verification code to email", error)
+                Toast.makeText(this, "Error sending verification code to email", Toast.LENGTH_SHORT).show()
+            }
+        ) {
+            override fun getParams(): MutableMap<String, String> {
+                val params = HashMap<String, String>()
+                params["TwoFactAuth"] = newVerificationCode
+                params["User"] = username
+                params["Email"] = email
+                return params
+            }
+        }
+
+        queue.add(stringRequest)
+    }
+
+    private fun sendRequest(parking: Int, qrCodeId: Int) {
         val queue = Volley.newRequestQueue(this)
         val request = object : StringRequest(
             Request.Method.POST, url,
@@ -129,6 +180,26 @@ class LoginTwoFactAuth : AppCompatActivity() {
         queue.add(request)
     }
 
+    private fun getEmailAndSendVerification(username: String) {
+        val urlWithParams = "$emailUrl?User=$username"
+
+        val stringRequest = StringRequest(Request.Method.GET, urlWithParams,
+            { response ->
+                userEmail = response.trim() // Assuming response is the email address
+                Log.d("UserEmail", userEmail)
+                // Generate new verification code and send to email
+                verificationCode = generateVerificationCode()
+                sendVerificationToEmail(userEmail, username, verificationCode)
+            },
+            { error ->
+                // Handle error
+                showToast("Error getting email: ${error.message}")
+            })
+
+        // Add the request to the RequestQueue
+        Volley.newRequestQueue(this).add(stringRequest)
+    }
+
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
@@ -153,12 +224,10 @@ class LoginTwoFactAuth : AppCompatActivity() {
         Volley.newRequestQueue(this).add(stringRequest)
     }
 
-
     private fun generateVerificationCode(): String {
         val random = Random()
         return String.format("%06d", random.nextInt(1000000))
     }
-
 
     private fun sendVerificationCode(verificationCode: String, qrCodeId: Int) {
         val url = "https://nusmb.com/data/logintwofactauth.php" // Replace with your URL
