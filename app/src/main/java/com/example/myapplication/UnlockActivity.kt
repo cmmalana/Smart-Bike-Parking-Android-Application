@@ -70,7 +70,7 @@ class UnlockActivity : AppCompatActivity() {
                 if (response.trim() == "1") {
                     // Make lock button unclickable
                     lockButton.isEnabled = false
-                    lockButton.setImageResource(R.drawable.buttonulockgray)
+                    lockButton.setImageResource(R.drawable.buttonlockgray)
                     unlockButton.isEnabled = true
                     unlockButton.setImageResource(R.drawable.buttonulock)
                 } else if (response.trim() == "0") {
